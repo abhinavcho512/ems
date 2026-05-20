@@ -6,6 +6,7 @@ import {
   ChevronLeft, ChevronRight, Pencil, Trash2, X
 } from 'lucide-react';
 import EmployeeModal from '../components/EmployeeModal';
+import { useAuth } from '../context/AuthContext';
 
 const STATUS_COLORS = {
   ACTIVE:   { bg: '#dcfce7', text: '#15803d' },
@@ -31,6 +32,9 @@ export default function EmployeesPage() {
   const [editEmployee, setEditEmployee] = useState(null);
 
   const searchTimer = useRef(null);
+
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
@@ -112,9 +116,11 @@ export default function EmployeesPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700 }}>Employees</h1>
           <p style={{ color: '#64748b', fontSize: 13 }}>{meta.totalElements} total records</p>
         </div>
-        <button onClick={() => { setEditEmployee(null); setModalOpen(true); }} style={btnStyle('#6366f1')}>
-          <Plus size={16}/> Add employee
-        </button>
+        {isAdmin && (
+          <button onClick={() => { setEditEmployee(null); setModalOpen(true); }} style={btnStyle('#6366f1')}>
+            <Plus size={16}/> Add employee
+          </button>
+        )}
       </div>
 
       {/* Filters bar */}
@@ -150,7 +156,7 @@ export default function EmployeesPage() {
         {(search || deptFilter || statusFilter) && (
           <button onClick={() => { setSearch(''); setDeptFilter(''); setStatusFilter(''); setPage(0); }}
             style={{ display: 'flex', alignItems: 'center', gap: 4, border: '1px solid #e2e8f0',
-              borderRadius: 8, padding: '7px 10px', background: '#fff', fontSize: 12, color: '#64748b' }}>
+              borderRadius: 8, padding: '7px 10px', background: '#fff', fontSize: 12, color: '#64748b', cursor: 'pointer' }}>
             <X size={13}/> Clear
           </button>
         )}
@@ -173,7 +179,8 @@ export default function EmployeesPage() {
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                 {[
                   ['Name', 'firstName'], ['Email', 'email'], ['Department', 'department.name'],
-                  ['Salary', 'salary'], ['Status', null], ['Join date', 'joinDate'], ['Actions', null]
+                  ['Salary', 'salary'], ['Status', null], ['Join date', 'joinDate'],
+                  ...(isAdmin ? [['Actions', null]] : [])
                 ].map(([label, col]) => (
                   <th key={label}
                     onClick={col ? () => handleSort(col) : undefined}
@@ -192,9 +199,9 @@ export default function EmployeesPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading…</td></tr>
+                <tr><td colSpan={isAdmin ? 7 : 6} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading…</td></tr>
               ) : employees.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
+                <tr><td colSpan={isAdmin ? 7 : 6} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
                   No employees found
                 </td></tr>
               ) : employees.map(emp => (
@@ -233,18 +240,20 @@ export default function EmployeesPage() {
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748b' }}>
                     {emp.joinDate || '—'}
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => { setEditEmployee(emp); setModalOpen(true); }}
-                        style={iconBtn('#e0e7ff', '#4f46e5')}>
-                        <Pencil size={13}/>
-                      </button>
-                      <button onClick={() => handleDelete(emp.id)}
-                        style={iconBtn('#fee2e2', '#dc2626')}>
-                        <Trash2 size={13}/>
-                      </button>
-                    </div>
-                  </td>
+                  {isAdmin && (
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => { setEditEmployee(emp); setModalOpen(true); }}
+                          style={iconBtn('#e0e7ff', '#4f46e5')}>
+                          <Pencil size={13}/>
+                        </button>
+                        <button onClick={() => handleDelete(emp.id)}
+                          style={iconBtn('#fee2e2', '#dc2626')}>
+                          <Trash2 size={13}/>
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -270,7 +279,7 @@ export default function EmployeesPage() {
                   width: 30, height: 30, borderRadius: 6, border: '1px solid #e2e8f0',
                   background: i === page ? '#6366f1' : '#fff',
                   color: i === page ? '#fff' : '#374151',
-                  fontSize: 12, fontWeight: i === page ? 600 : 400,
+                  fontSize: 12, fontWeight: i === page ? 600 : 400, cursor: 'pointer',
                 }}>
                   {i + 1}
                 </button>
@@ -284,7 +293,7 @@ export default function EmployeesPage() {
         )}
       </div>
 
-      {modalOpen && (
+      {isAdmin && modalOpen && (
         <EmployeeModal
           employee={editEmployee}
           departments={departments}
@@ -300,7 +309,7 @@ const btnStyle = (bg, color = '#fff', border = 'transparent') => ({
   display: 'flex', alignItems: 'center', gap: 6,
   padding: '9px 14px', borderRadius: 8, border: `1px solid ${border}`,
   background: bg, color, fontWeight: 500, fontSize: 13,
-  transition: 'opacity .15s',
+  transition: 'opacity .15s', cursor: 'pointer',
 });
 
 const selectStyle = {

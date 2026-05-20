@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { departmentApi } from '../api';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, X, Building2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState([]);
@@ -9,6 +10,9 @@ export default function DepartmentsPage() {
   const [modal, setModal] = useState({ open: false, dept: null });
   const [form, setForm] = useState({ name: '', description: '' });
   const [saving, setSaving] = useState(false);
+
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
   const load = () => {
     setLoading(true);
@@ -63,13 +67,15 @@ export default function DepartmentsPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700 }}>Departments</h1>
           <p style={{ color: '#64748b', fontSize: 13 }}>{departments.length} departments</p>
         </div>
-        <button onClick={openAdd} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '9px 14px', borderRadius: 8, border: 'none',
-          background: '#6366f1', color: '#fff', fontWeight: 500, fontSize: 13,
-        }}>
-          <Plus size={16}/> Add department
-        </button>
+        {isAdmin && (
+          <button onClick={openAdd} style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '9px 14px', borderRadius: 8, border: 'none',
+            background: '#6366f1', color: '#fff', fontWeight: 500, fontSize: 13, cursor: 'pointer',
+          }}>
+            <Plus size={16}/> Add department
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -115,30 +121,32 @@ export default function DepartmentsPage() {
                 }}>
                   {dept.employeeCount} employee{dept.employeeCount !== 1 ? 's' : ''}
                 </span>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button onClick={() => openEdit(dept)} style={{
-                    width: 30, height: 30, borderRadius: 6, border: 'none',
-                    background: '#e0e7ff', color: '#4f46e5',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Pencil size={13}/>
-                  </button>
-                  <button onClick={() => handleDelete(dept.id)} style={{
-                    width: 30, height: 30, borderRadius: 6, border: 'none',
-                    background: '#fee2e2', color: '#dc2626',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Trash2 size={13}/>
-                  </button>
-                </div>
+                {isAdmin && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => openEdit(dept)} style={{
+                      width: 30, height: 30, borderRadius: 6, border: 'none',
+                      background: '#e0e7ff', color: '#4f46e5', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Pencil size={13}/>
+                    </button>
+                    <button onClick={() => handleDelete(dept.id)} style={{
+                      width: 30, height: 30, borderRadius: 6, border: 'none',
+                      background: '#fee2e2', color: '#dc2626', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Trash2 size={13}/>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Modal */}
-      {modal.open && (
+      {/* Modal — only admins can open this anyway */}
+      {modal.open && isAdmin && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -157,7 +165,7 @@ export default function DepartmentsPage() {
               </h2>
               <button onClick={closeModal} style={{
                 background: '#f1f5f9', border: 'none', borderRadius: 8,
-                width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
               }}>
                 <X size={16}/>
               </button>
@@ -171,7 +179,7 @@ export default function DepartmentsPage() {
                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="e.g. Engineering"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: 8, fontSize: 13,
-                    border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }}/>
+                    border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', boxSizing: 'border-box' }}/>
               </div>
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 5, color: '#374151' }}>
@@ -180,17 +188,17 @@ export default function DepartmentsPage() {
                 <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   rows={3} placeholder="What does this department do?"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: 8, fontSize: 13,
-                    border: '1px solid #e2e8f0', background: '#f8fafc', resize: 'vertical', outline: 'none' }}/>
+                    border: '1px solid #e2e8f0', background: '#f8fafc', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}/>
               </div>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                 <button type="button" onClick={closeModal} style={{
                   padding: '9px 18px', borderRadius: 8, border: '1px solid #e2e8f0',
-                  background: '#fff', color: '#374151', fontWeight: 500, fontSize: 13,
+                  background: '#fff', color: '#374151', fontWeight: 500, fontSize: 13, cursor: 'pointer',
                 }}>Cancel</button>
                 <button type="submit" disabled={saving} style={{
                   padding: '9px 18px', borderRadius: 8, border: 'none',
                   background: '#6366f1', color: '#fff', fontWeight: 600, fontSize: 13,
-                  opacity: saving ? 0.7 : 1,
+                  opacity: saving ? 0.7 : 1, cursor: 'pointer',
                 }}>
                   {saving ? 'Saving…' : modal.dept ? 'Save changes' : 'Create'}
                 </button>
